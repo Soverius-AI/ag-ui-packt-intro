@@ -22,7 +22,7 @@ import type { ChooseArgs, Subscription } from './subscription';
           @for (subscription of subscriptions(); track subscription.id) {
             <li [class.suggested]="reasons().has(subscription.id)">
               <label>
-                <input type="checkbox" [checked]="chosen().has(subscription.id)" [disabled]="toolCall().status !== 'executing'" (change)="toggle(subscription.id)" />
+                <input type="checkbox" [checked]="chosen().has(subscription.id)" [disabled]="!ready()" (change)="toggle(subscription.id)" />
                 {{ subscription.name }}
               </label>
               <span class="reason">{{ reasons().get(subscription.id) ?? subscription.note ?? 'last used ' + subscription.lastUsed }}</span>
@@ -30,7 +30,7 @@ import type { ChooseArgs, Subscription } from './subscription';
             </li>
           }
         </ul>
-        <button [disabled]="toolCall().status !== 'executing'" (click)="confirm()">
+        <button [disabled]="!ready()" (click)="confirm()">
           @if (chosen().size) {
             Cancel {{ chosen().size }} · save {{ savings() | currency: 'EUR' }} per month
           } @else {
@@ -80,6 +80,13 @@ export class ChooseCard {
       .map((subscription) => subscription.name);
     return names.length ? `Cancel ${names.join(', ')}` : 'Keep everything';
   });
+
+  /**
+   * Answerable only once the whole proposal has arrived. The chat never passes isLoading down, so the status is already
+   * 'executing' at TOOL_CALL_START, and until the argument JSON is complete args is { _raw }. A finished empty proposal
+   * ({ "suggestions": [] }) parses fine, so "Keep everything" still works.
+   */
+  protected readonly ready = computed(() => this.toolCall().status === 'executing' && !('_raw' in this.toolCall().args));
 
   private touched = false;
 
