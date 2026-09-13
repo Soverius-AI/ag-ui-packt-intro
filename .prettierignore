@@ -5,3 +5,7 @@
 /.nx/workspace-data
 pnpm-lock.yaml
 .angular
+
+# The demo code is formatted by hand to match the slides and the step branches.
+# Format-on-save would reflow it and break `git diff --stat <step>-solution` on stage.
+apps/
