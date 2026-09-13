@@ -46,3 +46,6 @@ Thumbs.db
 
 # abo-flow --record output
 recordings/
+
+# the complete solution while live:reset is in effect
+tools/live/.solution

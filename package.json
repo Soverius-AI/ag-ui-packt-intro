@@ -13,7 +13,14 @@
     "smoke": "NX_DAEMON=false nx run agent:smoke --",
     "typecheck": "NX_DAEMON=false nx run-many -t typecheck",
     "build": "NX_DAEMON=false nx run-many -t build",
-    "abo-flow": "NX_DAEMON=false nx run agent:abo-flow --"
+    "abo-flow": "NX_DAEMON=false nx run agent:abo-flow --",
+    "live": "node tools/live/live.mjs",
+    "live:reset": "node tools/live/live.mjs reset",
+    "live:solve": "node tools/live/live.mjs solve",
+    "live:status": "node tools/live/live.mjs status",
+    "live:done": "node tools/live/live.mjs done",
+    "steps:generate": "node tools/live/steps.mjs generate",
+    "steps:verify": "node tools/live/steps.mjs verify"
   },
   "dependencies": {
     "@ag-ui/client": "0.0.59",
