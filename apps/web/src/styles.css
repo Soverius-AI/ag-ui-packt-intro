@@ -1,0 +1,114 @@
+@import "@copilotkit/angular/styles.css";
+
+/* Soverius talk tokens, so the demo and the slides feel like one surface. */
+:root {
+  --sv-bg: #f7f8fb;
+  --sv-surface: #fbfcfd;
+  --sv-text: #0b151d;
+  --sv-muted: #52616b;
+  --sv-line: #c8d2da;
+  --sv-blue: #0867ad;
+  --sv-green: #087d8f;
+  --sv-orange: #a84e00;
+  font-family: ui-sans-serif, system-ui, -apple-system, 'Segoe UI', sans-serif;
+  color: var(--sv-text);
+}
+
+html,
+body {
+  height: 100%;
+  margin: 0;
+}
+
+body {
+  background:
+    radial-gradient(circle at 88% 12%, rgba(70, 162, 216, 0.18), transparent 31%),
+    radial-gradient(circle at 79% 88%, rgba(224, 119, 30, 0.09), transparent 27%),
+    linear-gradient(rgba(51, 86, 112, 0.06) 1px, transparent 1px) 0 0 / 60px 60px,
+    linear-gradient(90deg, rgba(51, 86, 112, 0.06) 1px, transparent 1px) 0 0 / 60px 60px,
+    var(--sv-bg);
+}
+
+.app {
+  display: flex;
+  flex-direction: column;
+  height: 100vh;
+  max-width: 960px;
+  margin: 0 auto;
+  padding: 0 24px;
+  box-sizing: border-box;
+}
+
+.app-header {
+  display: flex;
+  align-items: flex-end;
+  justify-content: space-between;
+  gap: 24px;
+  padding: 28px 0 14px;
+  border-bottom: 2px solid rgba(42, 63, 78, 0.25);
+}
+
+.app-header h1 {
+  margin: 0;
+  font-size: 34px;
+  line-height: 1.05;
+  letter-spacing: -0.04em;
+}
+
+.app-header p {
+  margin: 6px 0 0;
+  color: var(--sv-muted);
+  font-size: 15px;
+}
+
+.badges {
+  display: flex;
+  gap: 8px;
+  list-style: none;
+  margin: 0;
+  padding: 0;
+}
+
+.badges li {
+  padding: 5px 10px;
+  border: 1px solid var(--sv-line);
+  border-radius: 999px;
+  color: var(--sv-muted);
+  font-size: 12px;
+  font-weight: 750;
+  letter-spacing: 0.14em;
+  opacity: 0.45;
+}
+
+.badges li[data-on] {
+  border-color: var(--sv-orange);
+  color: var(--sv-orange);
+  opacity: 1;
+}
+
+.examples {
+  display: flex;
+  gap: 8px;
+  padding: 14px 0 0;
+}
+
+.examples a {
+  padding: 6px 12px;
+  border: 1px solid var(--sv-line);
+  border-radius: 999px;
+  color: var(--sv-muted);
+  font-size: 14px;
+  text-decoration: none;
+}
+
+.examples a.active {
+  border-color: var(--sv-blue);
+  color: var(--sv-blue);
+  background: rgba(8, 103, 173, 0.06);
+}
+
+.page {
+  flex: 1;
+  min-height: 0;
+  padding: 16px 0 20px;
+}

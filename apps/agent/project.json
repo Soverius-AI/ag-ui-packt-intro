@@ -1,0 +1,41 @@
+{
+  "name": "agent",
+  "$schema": "../../node_modules/nx/schemas/project-schema.json",
+  "projectType": "application",
+  "sourceRoot": "apps/agent/src",
+  "tags": [],
+  "targets": {
+    "serve": {
+      "continuous": true,
+      "executor": "nx:run-commands",
+      "options": {
+        "command": "node --watch src/server.ts",
+        "cwd": "{projectRoot}"
+      }
+    },
+    "start": {
+      "continuous": true,
+      "executor": "nx:run-commands",
+      "options": {
+        "command": "node src/server.ts",
+        "cwd": "{projectRoot}"
+      }
+    },
+    "typecheck": {
+      "executor": "nx:run-commands",
+      "cache": true,
+      "inputs": ["default", { "externalDependencies": ["typescript", "@types/node"] }],
+      "options": {
+        "command": "tsc --noEmit -p tsconfig.json",
+        "cwd": "{projectRoot}"
+      }
+    },
+    "smoke": {
+      "executor": "nx:run-commands",
+      "options": {
+        "command": "node scripts/smoke.ts",
+        "cwd": "{projectRoot}"
+      }
+    }
+  }
+}
