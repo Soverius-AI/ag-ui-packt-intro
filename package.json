@@ -12,7 +12,8 @@
     "web": "NX_DAEMON=false nx run web:serve",
     "smoke": "NX_DAEMON=false nx run agent:smoke --",
     "typecheck": "NX_DAEMON=false nx run-many -t typecheck",
-    "build": "NX_DAEMON=false nx run-many -t build"
+    "build": "NX_DAEMON=false nx run-many -t build",
+    "abo-flow": "NX_DAEMON=false nx run agent:abo-flow --"
   },
   "dependencies": {
     "@ag-ui/client": "0.0.59",

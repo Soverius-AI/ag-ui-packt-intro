@@ -43,3 +43,6 @@ Thumbs.db
 .claude/settings.local.json
 
 .angular
+
+# abo-flow --record output
+recordings/

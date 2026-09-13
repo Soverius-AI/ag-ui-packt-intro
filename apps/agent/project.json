@@ -36,6 +36,12 @@
         "command": "node scripts/smoke.ts",
         "cwd": "{projectRoot}"
       }
+    },
+    "abo-flow": {
+      "executor": "nx:run-commands",
+      "options": {
+        "command": "node apps/agent/scripts/abo-flow.ts"
+      }
     }
   }
 }

@@ -5,11 +5,16 @@
  *   run 2  send_cancellations → interrupt (DECIDE)
  *   run 3  resume "approved" → one subagent per provider (DELEGATE) → summary
  *
- * Each run's events are written to talk/recordings/abo-run-N.jsonl (replay mode, slides).
+ * It prints every run. With --record <dir> it also writes each run's events to <dir>/abo-run-N.jsonl
+ * (replay mode, slides). A relative <dir> resolves against the current working directory, which is
+ * the repository root under Nx. AGENT_URL points at another agent (default http://localhost:8930/abo).
  *
- *   node scripts/abo-flow.ts
+ *   pnpm nx run agent:abo-flow
+ *   pnpm nx run agent:abo-flow --record recordings
+ *   node apps/agent/scripts/abo-flow.ts --record /tmp/abo
  */
 import { mkdirSync, writeFileSync } from 'node:fs';
+import { join, resolve } from 'node:path';
 import { HttpAgent } from '@ag-ui/client';
 
 type RunParameters = Parameters<HttpAgent['runAgent']>[0];
@@ -43,8 +48,8 @@ const chooseTool = {
     additionalProperties: false,
   },
 };
-const recordings = new URL('../../recordings/', import.meta.url);
-mkdirSync(recordings, { recursive: true });
+const recordings = recordDirectory(process.argv.slice(2));
+if (recordings) mkdirSync(recordings, { recursive: true });
 
 agent.addMessage({ id: 'user-1', role: 'user', content: 'Find subscriptions I can cancel.' });
 await run(1, { tools: [chooseTool] });
@@ -76,8 +81,20 @@ async function run(n: number, parameters: RunParameters): Promise<void> {
       events.push({ ...event, timestamp: event.timestamp ?? Date.now() });
     },
   });
-  writeFileSync(new URL(`abo-run-${n}.jsonl`, recordings), `${events.map((event) => JSON.stringify(event)).join('\n')}\n`);
   console.log(`\nrun ${n} (${((Date.now() - started) / 1000).toFixed(1)} s, ${events.length} events)\n  ${collapse(events.map((event) => event.type)).join('\n  → ')}`);
+  if (!recordings) return;
+  const file = join(recordings, `abo-run-${n}.jsonl`);
+  writeFileSync(file, `${events.map((event) => JSON.stringify(event)).join('\n')}\n`);
+  console.log(`  recorded ${file}`);
+}
+
+/** `--record <dir>` or `--record=<dir>`, resolved against the current working directory; undefined without the flag. */
+function recordDirectory(args: string[]): string | undefined {
+  const index = args.findIndex((arg) => arg === '--record' || arg.startsWith('--record='));
+  if (index < 0) return undefined;
+  const dir = args[index] === '--record' ? args[index + 1] : args[index].slice('--record='.length);
+  if (!dir || dir.startsWith('--')) fail('--record needs a directory, for example --record recordings');
+  return resolve(dir);
 }
 
 function lastToolCall(name: string) {
