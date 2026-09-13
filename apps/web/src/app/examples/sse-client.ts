@@ -1,11 +1,12 @@
 import { Component, computed, signal } from '@angular/core';
 import { FormsModule } from '@angular/forms';
+import { runHttpRequest, transformHttpEventStream, verifyEvents } from '@ag-ui/client';
 
 type WireEvent = { type: string; messageId?: string; delta?: string };
 type ChatMessage = { id: string; role: 'user' | 'assistant'; content: string };
 
 /**
- * An AG-UI client without CopilotKit: POST a RunAgentInput, read the SSE stream, render the events.
+ * An AG-UI client without CopilotKit: POST a RunAgentInput, read the events with @ag-ui/client, render them.
  */
 @Component({
   selector: 'app-sse-client',
@@ -79,33 +80,25 @@ export class SseClient {
     this.running.set(true);
 
     try {
-      // @live 3 begin: POST a RunAgentInput, read the SSE stream
-      const response = await fetch(`http://localhost:8930${this.route()}`, {
-        method: 'POST',
-        headers: { 'Content-Type': 'application/json', Accept: 'text/event-stream' },
-        body: JSON.stringify({
-          threadId: this.threadId,
-          runId: crypto.randomUUID(),
-          messages: this.messages(),
-          tools: [],
-          context: [],
-          state: {},
+      // @live 3 begin: POST a RunAgentInput, read the events with @ag-ui/client
+      const response$ = runHttpRequest(() =>
+        fetch(`http://localhost:8930${this.route()}`, {
+          method: 'POST',
+          headers: { 'Content-Type': 'application/json', Accept: 'text/event-stream' },
+          body: JSON.stringify({
+            threadId: this.threadId, runId: crypto.randomUUID(),
+            messages: this.messages(), tools: [], context: [], state: {},
+          }),
         }),
-      });
+      );
 
-      const reader = response.body!.pipeThrough(new TextDecoderStream()).getReader();
-      let buffer = '';
-      for (let chunk = await reader.read(); !chunk.done; chunk = await reader.read()) {
-        buffer += chunk.value;
-        let end: number;
-        while ((end = buffer.indexOf('\n\n')) >= 0) {
-          const frame = buffer.slice(0, end);
-          buffer = buffer.slice(end + 2);
-          if (frame.startsWith('data: ')) this.events.update((list) => [...list, JSON.parse(frame.slice(6))]);
-        }
-      }
+      const events$ = transformHttpEventStream(response$).pipe(verifyEvents());
+      await events$.forEach((event) => this.events.update((list) => [...list, event]));
 
-      this.messages.update((list) => [...list, { id: crypto.randomUUID(), role: 'assistant', content: this.answer() }]);
+      this.messages.update((list) => [
+        ...list,
+        { id: crypto.randomUUID(), role: 'assistant', content: this.answer() },
+      ]);
       // @live 3 end
     } finally {
       this.running.set(false);

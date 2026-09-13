@@ -19,7 +19,7 @@ import { Badges } from './badges';
         </ul>
       </header>
       <nav class="examples">
-        <a routerLink="/sse" routerLinkActive="active">1 · Raw SSE client</a>
+        <a routerLink="/sse" routerLinkActive="active">1 · AG-UI client without CopilotKit</a>
         <a routerLink="/copilotkit" routerLinkActive="active">2 · CopilotKit</a>
         <a routerLink="/protobuf" routerLinkActive="active">3 · CopilotKit + protobuf</a>
         <a routerLink="/abo" routerLinkActive="active">4 · Abo-Killer</a>

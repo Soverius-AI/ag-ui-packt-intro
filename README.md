@@ -13,7 +13,7 @@ This repository is the live-coding demo of the talk. `main` has the finished cod
 
 ```
 Angular + CopilotKit (:5180)  ──POST RunAgentInput──▶  AG-UI server (:8930)  ──Chat Completions──▶  llama-server + Gemma 4 (:8080)
-  /sse          fetch + SSE, no framework               /hello  no model, just the protocol
+  /sse          fetch + @ag-ui/client helpers           /hello  no model, just the protocol
   /copilotkit   CopilotKit over SSE                     /agui   Gemma 4
   /protobuf     CopilotKit over protobuf                /abo    Abo-Killer
   /abo          Abo-Killer                              The Accept header picks SSE or protobuf
@@ -54,7 +54,7 @@ The routes of the Angular app:
 
 | Route | What it shows | Agent |
 |---|---|---|
-| `/sse` | A client without CopilotKit: POST a `RunAgentInput`, read the SSE frames | `/agui` or `/hello` |
+| `/sse` | A client without CopilotKit: POST a `RunAgentInput`, read the events with `@ag-ui/client` | `/agui` or `/hello` |
 | `/copilotkit` | CopilotKit's chat over SSE. Gemma's reasoning shows up without any code for it | `/agui` |
 | `/protobuf` | The same chat over protobuf | `/agui` |
 | `/abo` | Abo-Killer: SEE, ASK, DECIDE, DELEGATE | `/abo` |
@@ -100,7 +100,7 @@ Every step has a branch pair. The start branch is what the audience sees, and th
 2. Open the files from the table. Where the step goes, you find two arrows:
 
    ```ts
-   // ▶ step 3: POST a RunAgentInput, read the SSE stream
+   // ▶ step 3: POST a RunAgentInput, read the events with @ag-ui/client
    // ◀ step 3
    ```
 

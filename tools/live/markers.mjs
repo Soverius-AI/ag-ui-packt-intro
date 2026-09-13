@@ -2,7 +2,7 @@
  * The @live step markers, shared by live.mjs (reset and solve in the working tree) and steps.mjs (the step branches),
  * so both write the arrows byte for byte the same way.
  *
- *   // @live 3 begin: POST a RunAgentInput, read the SSE stream
+ *   // @live 3 begin: POST a RunAgentInput, read the events with @ag-ui/client
  *   …the code you type on stage…
  *   // @live 3 stub: return;          optional placeholder while the step is open
  *   // @live 3 end

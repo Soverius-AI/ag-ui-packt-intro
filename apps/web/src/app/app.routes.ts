@@ -5,7 +5,7 @@ export const routes: Routes = [
   { path: '', pathMatch: 'full', redirectTo: 'sse' },
   {
     path: 'sse',
-    title: '1 · Raw SSE client',
+    title: '1 · AG-UI client without CopilotKit',
     loadComponent: () => import('./examples/sse-client').then((m) => m.SseClient),
   },
   {

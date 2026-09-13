@@ -11,7 +11,7 @@
  *
  * Solution code marks each step (inside Angular templates use <!-- … -->):
  *
- *   // @live 3 begin: POST a RunAgentInput, read the SSE stream
+ *   // @live 3 begin: POST a RunAgentInput, read the events with @ag-ui/client
  *   …the code you type on stage…
  *   // @live 3 stub: return;          optional placeholder while the step is open
  *   // @live 3 end
