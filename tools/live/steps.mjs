@@ -45,7 +45,6 @@ const MAIN = 'main';
 const SOURCES = ['apps/agent/src', 'apps/web/src'];
 const LOGS = join(ROOT, 'tmp', 'steps-verify');
 const SMOKE_PORT = 18930;
-const TRAILER = 'Co-Authored-By: Claude Opus 5 <noreply@anthropic.com>';
 
 /** One commit per entry, in order. `branch` names the step pair that ends at this commit; its start is the commit before. */
 const STEPS = [
@@ -139,7 +138,7 @@ function commitMessage(step, files) {
       if (here.length) lines.push(`- ${file.path}${here.some((id) => id !== String(step.step)) ? ` (step ${here.join(', ')})` : ''}`);
     }
   }
-  return `Step ${step.step} · ${step.title}\n\n${lines.join('\n')}\n\nGenerated from ${MAIN} by tools/live/steps.mjs.\n\n${TRAILER}\n`;
+  return `Step ${step.step} · ${step.title}\n\n${lines.join('\n')}\n\nGenerated from ${MAIN} by tools/live/steps.mjs.\n`;
 }
 
 // ── verify ─────────────────────────────────────────────────────────────────────
