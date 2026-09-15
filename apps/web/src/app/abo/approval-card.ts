@@ -9,6 +9,13 @@ import { injectInterrupt } from '@copilotkit/angular';
   selector: 'abo-approval-card',
   template: `
     <!-- ▶ step 8: show the question, send the answer -->
+    @if (approval.interrupt(); as request) {
+      <section class="approval">
+        <p><strong>Approval needed</strong><br />{{ request.message }}</p>
+        <button class="primary" (click)="approval.resolve({ approved: true })">Approve</button>
+        <button (click)="approval.cancel()">Cancel</button>
+      </section>
+    }
     <!-- ◀ step 8 -->
   `,
   styles: `
@@ -20,5 +27,6 @@ import { injectInterrupt } from '@copilotkit/angular';
 })
 export class ApprovalCard {
   // ▶ step 8: the interrupt of the abo agent, as signals
+  protected readonly approval = injectInterrupt('abo');
   // ◀ step 8
 }

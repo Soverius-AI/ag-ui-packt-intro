@@ -97,8 +97,16 @@ export async function* aboAgent(input: RunAgentInput, signal: AbortSignal): Asyn
           continue;
         }
         // ▶ step 8: DECIDE, legally binding, so end the run with a question instead of acting
-        yield* toolResult(messages, call.id, cancelAll(chosen.map((subscription) => subscription.id))); // nobody was asked!
-        continue;
+        yield {
+          type: EventType.RUN_FINISHED,
+          threadId,
+          runId,
+          outcome: {
+            type: 'interrupt',
+            interrupts: [{ id: APPROVAL_ID, reason: 'confirmation', toolCallId: call.id, message: approvalMessage(chosen) }],
+          },
+        };
+        return;
         // ◀ step 8
       }
 
