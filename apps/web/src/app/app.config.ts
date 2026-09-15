@@ -16,6 +16,7 @@ export const appConfig: ApplicationConfig = {
     provideCopilotKit({
       agents: {
         // ▶ step 4: our Gemma agent, over SSE
+        default: new HttpAgent({ url: `${AGENT}/agui` }),
         // ◀ step 4
         // ▶ step 5: the same agent, binary wire format
         // ◀ step 5

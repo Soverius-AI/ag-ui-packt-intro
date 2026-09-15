@@ -4,11 +4,11 @@ import { CopilotChat } from '@copilotkit/angular';
 @Component({
   selector: 'app-copilot-page',
   // ▶ step 4: CopilotKit's chat component
-  imports: [],
+  imports: [CopilotChat],
   // ◀ step 4
   template: `
     <!-- ▶ step 4: the whole chat UI, for the agent named in the route -->
-    <p class="placeholder">Step 4: CopilotKit</p>
+    <copilot-chat [agentId]="agentId()" />
     <!-- ◀ step 4 -->
   `,
   styles: `
