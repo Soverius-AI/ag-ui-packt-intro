@@ -51,6 +51,7 @@ async function handle(req: IncomingMessage, res: ServerResponse): Promise<void> 
   // The agent for this route: an async generator of AG-UI events.
   let events = agent(input, abortOnClose(res));
   // ▶ step 5s: SDK 0.0.59 cannot encode reasoning, activity or tool results as protobuf
+  if (req.headers.accept?.includes(AGUI_MEDIA_TYPE)) events = skipUnencodable(events);
   // ◀ step 5s
 
   // ▶ step 1: one agent, two wire formats

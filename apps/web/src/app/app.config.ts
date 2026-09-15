@@ -19,6 +19,7 @@ export const appConfig: ApplicationConfig = {
         default: new HttpAgent({ url: `${AGENT}/agui` }),
         // ◀ step 4
         // ▶ step 5: the same agent, binary wire format
+        protobuf: new ProtobufHttpAgent({ url: `${AGENT}/agui` }),
         // ◀ step 5
         abo: new HttpAgent({ url: `${AGENT}/abo` }), // Abo-Killer, from step 6 on
       },
