@@ -54,7 +54,12 @@ async function handle(req: IncomingMessage, res: ServerResponse): Promise<void> 
   // ◀ step 5s
 
   // ▶ step 1: one agent, two wire formats
-  res.writeHead(501).end('Step 1: stream the events\n');
+  const encoder = new EventEncoder({ accept: req.headers.accept });
+  res.writeHead(200, { 'Content-Type': encoder.getContentType() });
+  for await (const event of events) {
+    res.write(encoder.encodeBinary(event));
+  }
+  res.end();
   // ◀ step 1
 }
 
