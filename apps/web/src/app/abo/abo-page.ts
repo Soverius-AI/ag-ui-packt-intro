@@ -33,6 +33,9 @@ import { SubscriptionsCard } from './subscriptions-card';
 export class AboPage {
   constructor() {
     // ▶ step 6: SEE, show the scan while it runs (activity) and its result (tool call)
+    registerRenderActivityMessage({ activityType: 'scan', content: ScanProgressSchema, component: ScanProgress, agentId: 'abo' });
+    registerRenderToolCall({ name: 'scan_statements', args: z.object({ months: z.number() }), component: SubscriptionsCard, agentId: 'abo' });
+    lightBadges('SEE');
     // ◀ step 6
 
     // ▶ step 7: ASK, the agent proposes in the tool arguments, the human decides
