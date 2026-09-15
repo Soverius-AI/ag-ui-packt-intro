@@ -39,6 +39,14 @@ export class AboPage {
     // ◀ step 6
 
     // ▶ step 7: ASK, the agent proposes in the tool arguments, the human decides
+    registerHumanInTheLoop({
+      name: 'choose_subscriptions',
+      description: 'Propose which subscriptions to cancel, each with a short reason. The user reviews and decides.',
+      parameters: ChooseArgsSchema,
+      component: ChooseCard,
+      agentId: 'abo',
+    });
+    lightBadges('ASK');
     // ◀ step 7
 
     // ▶ step 8: DECIDE, <abo-approval-card> answers the interrupt
