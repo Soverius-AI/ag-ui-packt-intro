@@ -19,7 +19,12 @@
  * A reset turns every step into  // ▶ step 3: …  placeholder  // ◀ step 3  so you type between the arrows.
  * The complete solution is saved in tools/live/.solution/ on every reset, from the files that are still complete.
  * The step branches are generated from the same markers: see steps.mjs.
+ *
+ * A step branch has the arrows but no @live markers. There the steps are read from main (or origin/main), and reset,
+ * solve and done keep the arrows and write the placeholder or the code between them, the way the step branches have it:
+ * after  pnpm live:solve 4  on 04-copilotkit-start,  git diff --stat 04-copilotkit-solution  shows nothing.
  */
+import { spawnSync } from 'node:child_process';
 import { existsSync, mkdirSync, readFileSync, readdirSync, writeFileSync } from 'node:fs';
 import { dirname, join, relative, resolve } from 'node:path';
 import { fileURLToPath } from 'node:url';
@@ -28,6 +33,8 @@ import { ANCHOR, MARKER, byStep, hasRegions, isOpen, regions, strip } from './ma
 const ROOT = join(dirname(fileURLToPath(import.meta.url)), '..', '..');
 const SOLUTION = join(ROOT, 'tools', 'live', '.solution');
 const SOURCES = ['apps/agent/src', 'apps/web/src'];
+const MAIN = ['main', 'origin/main'];
+let branch; // the files of a step branch, found once per command (see branchSources)
 
 const [command = 'status', ...args] = process.argv.slice(2);
 
@@ -45,9 +52,10 @@ try {
 }
 
 function reset() {
+  const branch = branchSources().map((source) => source.working);
   for (const file of sourceFiles()) {
     const text = read(file);
-    if (!hasRegions(text) || isOpen(text)) continue;
+    if (branch.includes(file) || !hasRegions(text) || isOpen(text)) continue;
     const snapshot = solutionOf(file);
     if (existsSync(snapshot) && regions(text, rel(file)).length < regions(read(snapshot), rel(snapshot)).length) {
       console.warn(`! ${rel(file)} has fewer steps than its saved solution; keeping the saved one`);
@@ -55,90 +63,87 @@ function reset() {
     }
     write(snapshot, text);
   }
-  const snapshots = walk(SOLUTION);
-  if (!snapshots.length) throw new Error(`No @live steps found in ${SOURCES.join(' or ')}.`);
-  for (const snapshot of snapshots) write(workingOf(snapshot), strip(read(snapshot), rel(snapshot)));
-  console.log(`Reset to the starting point. The solution is saved in ${rel(SOLUTION)}/.\n`);
+  const sources = openSources();
+  if (!sources.length) throw new Error(`No @live steps found in ${SOURCES.join(' or ')}.`);
+  for (const source of sources) {
+    write(source.working, source.ref ? between(read(source.working), source, (region) => region.stubs) : strip(source.text, source.label));
+  }
+  const ref = sources.find((source) => source.ref)?.ref;
+  console.log(`Reset to the starting point. ${ref ? `The code of the steps is read from ${ref}.` : `The solution is saved in ${rel(SOLUTION)}/.`}\n`);
   status();
 }
 
 function solve(steps) {
-  const snapshots = walk(SOLUTION);
-  if (!snapshots.length) throw new Error('Nothing to solve: the code is complete. Run reset first.');
+  const sources = openSources();
+  if (!sources.length) throw new Error('Nothing to solve: the code is complete. Run reset first.');
   const wanted = !steps.length || steps.includes('all') ? null : new Set(steps);
   const found = new Set();
 
-  for (const snapshot of snapshots) {
-    const solution = read(snapshot).split('\n');
-    const chosen = regions(solution.join('\n'), rel(snapshot)).filter((region) => !wanted || wanted.has(region.id));
+  for (const source of sources) {
+    const chosen = source.regions.filter((region) => !wanted || wanted.has(region.id));
     if (!chosen.length) continue;
 
-    const working = workingOf(snapshot);
-    const lines = read(working).split('\n');
+    const solution = source.text.split('\n');
+    const lines = read(source.working).split('\n');
     const out = [];
-    const nth = new Map();
     const placed = new Map();
-
-    for (let i = 0; i < lines.length; i++) {
-      const marker = MARKER.exec(lines[i]);
-      if (marker?.[3] === 'begin') count(nth, marker[2]);
-
-      const open = ANCHOR.exec(lines[i]);
-      if (open?.[1] === '▶') {
-        const id = open[2];
-        const index = count(nth, id) - 1;
-        const region = (!wanted || wanted.has(id)) && chosen.filter((candidate) => candidate.id === id)[index];
-        const close = lines.findIndex((line, j) => j > i && ANCHOR.exec(line)?.[1] === '◀' && ANCHOR.exec(line)?.[2] === id);
-        if (region && close > i) {
-          out.push(...solution.slice(region.start, region.end + 1));
-          count(placed, id);
-          i = close;
-          continue;
-        }
-      }
-      out.push(lines[i]);
+    const already = new Map();
+    for (const line of lines) {
+      const marker = MARKER.exec(line);
+      if (marker?.[3] === 'begin') count(already, marker[2]);
     }
-    write(working, out.join('\n'));
+
+    let from = 0;
+    for (const pair of arrows(lines, source.regions)) {
+      if (!pair.region || (wanted && !wanted.has(pair.id))) continue;
+      if (source.ref && pair.typed) {
+        count(already, pair.id);
+        continue;
+      }
+      // A step branch keeps its arrows around the code; with a saved solution the step gets its @live markers back.
+      const code = source.ref ? [lines[pair.open], ...pair.region.body, lines[pair.close]] : solution.slice(pair.region.start, pair.region.end + 1);
+      out.push(...lines.slice(from, pair.open), ...code);
+      count(placed, pair.id);
+      from = pair.close + 1;
+    }
+    out.push(...lines.slice(from));
+    if (placed.size) write(source.working, out.join('\n'));
 
     for (const id of new Set(chosen.map((region) => region.id))) {
       found.add(id);
       const expected = chosen.filter((region) => region.id === id).length;
-      const already = lines.filter((line) => MARKER.exec(line)?.[3] === 'begin' && MARKER.exec(line)?.[2] === id).length;
-      const done = (placed.get(id) ?? 0) + already;
-      if (placed.get(id)) console.log(`✓ step ${id}  ${rel(working)}`);
-      else if (already === expected) console.log(`· step ${id}  ${rel(working)} (already solved)`);
-      if (done < expected) console.warn(`! step ${id}  ${rel(working)}: no ▶ arrow left. If you typed it by hand, compare with: pnpm live show ${id}`);
+      const done = (placed.get(id) ?? 0) + (already.get(id) ?? 0);
+      if (placed.get(id)) console.log(`✓ step ${id}  ${rel(source.working)}`);
+      else if (already.get(id) === expected) console.log(`· step ${id}  ${rel(source.working)} (already solved)`);
+      if (done < expected) console.warn(`! step ${id}  ${rel(source.working)}: no ▶ arrow left. If you typed it by hand, compare with: pnpm live show ${id}`);
     }
   }
   for (const id of wanted ?? []) if (!found.has(id)) console.warn(`! there is no step ${id}`);
 }
 
 function done() {
-  const snapshots = walk(SOLUTION);
-  if (!snapshots.length) throw new Error('No saved solution: the code is already complete.');
-  for (const snapshot of snapshots) write(workingOf(snapshot), read(snapshot));
-  console.log(`Restored the complete solution (${snapshots.length} files).`);
+  const sources = openSources();
+  if (!sources.length) throw new Error('No saved solution: the code is already complete.');
+  for (const source of sources) {
+    write(source.working, source.ref ? between(read(source.working), source, (region) => region.body) : source.text);
+  }
+  console.log(`Restored the complete solution (${sources.length} files).`);
 }
 
 function status() {
   const steps = new Map();
   for (const source of solutionSources()) {
-    const working = source.startsWith(SOLUTION) ? workingOf(source) : source;
-    const open = new Set(
-      read(working)
-        .split('\n')
-        .map((line) => ANCHOR.exec(line))
-        .filter((match) => match?.[1] === '▶')
-        .map((match) => match[2]),
-    );
-    for (const region of regions(read(source), rel(source))) {
+    const pairs = arrows(read(source.working).split('\n'), source.regions);
+    const open = new Set(pairs.filter((pair) => !pair.typed).map((pair) => pair.id));
+    for (const region of source.regions) {
       const step = steps.get(region.id) ?? { title: '', files: new Set(), open: false };
       step.title ||= region.title;
-      step.files.add(rel(working));
+      step.files.add(rel(source.working));
       step.open ||= open.has(region.id);
       steps.set(region.id, step);
     }
   }
+  if (!steps.size) throw new Error(`No @live steps found in ${SOURCES.join(' or ')}.`);
   for (const [id, step] of [...steps].sort(([a], [b]) => byStep(a, b))) {
     console.log(`${step.open ? '○ open  ' : '● solved'}  step ${id.padEnd(3)} ${step.title}`);
     console.log(`            ${[...step.files].join(', ')}`);
@@ -168,11 +173,11 @@ function sheet(file) {
 function codeOf(steps) {
   return solutionSources()
     .flatMap((source) =>
-      regions(read(source), rel(source))
+      source.regions
         .filter((region) => steps.includes(region.id))
         .map((region) => ({
           id: region.id,
-          path: rel(source.startsWith(SOLUTION) ? workingOf(source) : source),
+          path: rel(source.working),
           language: region.html ? 'html' : 'ts',
           code: dedent(region.body),
         })),
@@ -188,18 +193,110 @@ function dedent(lines) {
   return trimmed.map((line) => line.slice(indent)).join('\n');
 }
 
-/** Complete working files win (they may be newer than the saved solution); the saved copy is used for files that are reset. */
+/**
+ * The complete code of every file with steps. Complete working files win (they may be newer than the saved solution);
+ * the saved copy is used for files that are reset, and main for the files of a step branch.
+ */
 function solutionSources() {
-  const complete = sourceFiles().filter((file) => {
-    const text = read(file);
-    return hasRegions(text) && !isOpen(text);
-  });
-  const saved = walk(SOLUTION).filter((snapshot) => !complete.includes(workingOf(snapshot)));
-  return [...complete, ...saved].sort((a, b) => rel(workingPath(a)).localeCompare(rel(workingPath(b))));
+  const branch = branchSources();
+  const complete = sourceFiles()
+    .filter((file) => !branch.some((source) => source.working === file))
+    .map((file) => source(file, read(file)))
+    .filter((source) => hasRegions(source.text) && !isOpen(source.text));
+  const saved = savedSources().filter((snapshot) => !complete.some((source) => source.working === snapshot.working));
+  return [...complete, ...saved, ...branch].sort((a, b) => rel(a.working).localeCompare(rel(b.working)));
 }
 
-function workingPath(source) {
-  return source.startsWith(SOLUTION) ? workingOf(source) : source;
+/** What reset, solve and done work on: the saved solution, or the files of a step branch. */
+function openSources() {
+  return [...savedSources(), ...branchSources()];
+}
+
+/** The saved solution, except for the files of a step branch (a leftover from a reset on main would put @live markers there). */
+function savedSources() {
+  const branch = branchSources();
+  return walk(SOLUTION)
+    .filter((snapshot) => !branch.some((source) => source.working === workingOf(snapshot)))
+    .map((snapshot) => source(workingOf(snapshot), read(snapshot), rel(snapshot)));
+}
+
+/** The files HEAD has with arrows instead of @live markers (a step branch), each with its @live markers read from main. */
+function branchSources() {
+  if (branch) return branch;
+  branch = [];
+  const hits = git(['grep', '-l', '-F', '▶ step ', 'HEAD', '--', ...SOURCES]) ?? '';
+  for (const path of hits.split('\n').filter(Boolean).map((hit) => hit.slice('HEAD:'.length))) {
+    if (!/\.(ts|html|css)$/.test(path) || !isOpen(git(['show', `HEAD:${path}`]) ?? '')) continue;
+    const { ref, text } = fromMain(path);
+    branch.push(source(join(ROOT, path), text, `${ref}:${path}`, ref));
+  }
+  return branch;
+}
+
+/** The file on the first of MAIN that has its @live markers. */
+function fromMain(path) {
+  for (const ref of MAIN) {
+    const text = git(['show', `${ref}:${path}`]);
+    if (text && hasRegions(text)) return { ref, text };
+  }
+  throw new Error(`${path} has arrows, but neither ${MAIN.join(' nor ')} has its @live markers. Run: git fetch origin main`);
+}
+
+/** A file with steps: where it is written, its complete code, and `ref` when that code comes from main (a step branch). */
+function source(working, text, label = rel(working), ref = undefined) {
+  let found;
+  return {
+    working,
+    text,
+    label,
+    ref,
+    get regions() {
+      return (found ??= regions(text, label));
+    },
+  };
+}
+
+/**
+ * Every ▶ … ◀ pair of a working file with the region it stands for: the nth beginning of a step (arrow or @live marker)
+ * is the nth region of that step. A pair is typed when the lines between its arrows are the code of its region.
+ */
+function arrows(lines, found) {
+  const nth = new Map();
+  const pairs = [];
+  lines.forEach((line, index) => {
+    const marker = MARKER.exec(line);
+    if (marker?.[3] === 'begin') count(nth, marker[2]);
+    const open = ANCHOR.exec(line);
+    if (open?.[1] !== '▶') return;
+    const id = open[2];
+    const region = found.filter((candidate) => candidate.id === id)[count(nth, id) - 1];
+    const close = lines.findIndex((other, j) => j > index && ANCHOR.exec(other)?.[1] === '◀' && ANCHOR.exec(other)?.[2] === id);
+    if (close < 0) return;
+    const inner = lines.slice(index + 1, close);
+    const typed = !!region && inner.length === region.body.length && inner.every((other, j) => other.trimEnd() === region.body[j].trimEnd());
+    pairs.push({ id, region, open: index, close, typed });
+  });
+  return pairs;
+}
+
+/** The text with new lines between the arrows of every step, keeping the arrows. */
+function between(text, source, fill) {
+  const lines = text.split('\n');
+  const out = [];
+  let from = 0;
+  for (const pair of arrows(lines, source.regions)) {
+    if (!pair.region) continue;
+    out.push(...lines.slice(from, pair.open + 1), ...fill(pair.region));
+    from = pair.close;
+  }
+  out.push(...lines.slice(from));
+  return out.join('\n');
+}
+
+/** The output of a git command, or null when it fails (no repository, unknown ref, missing file, no match). */
+function git(gitArgs) {
+  const result = spawnSync('git', gitArgs, { cwd: ROOT, encoding: 'utf8', maxBuffer: 64 * 1024 * 1024 });
+  return result.status === 0 ? result.stdout : null;
 }
 
 function sourceFiles() {

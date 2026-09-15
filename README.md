@@ -161,7 +161,7 @@ pnpm nx run agent:abo-flow --record recordings
 
 ## Maintaining the steps
 
-For the speaker, on `main`:
+For the speaker, on `main`. The `live` commands also work on a step branch: there they read the steps from `main` and keep the arrows, so after `pnpm live:solve 4` on `04-copilotkit-start`, `git diff --stat 04-copilotkit-solution` shows nothing.
 
 | Command | What it does |
 |---|---|
