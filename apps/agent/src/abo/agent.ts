@@ -51,7 +51,7 @@ export async function* aboAgent(input: RunAgentInput, signal: AbortSignal): Asyn
   if (pending) {
     const approved = answer.status === 'resolved';
     // ▶ step 9: DELEGATE, one subagent per provider, all in parallel
-    const result = approved ? cancelAll(chosenIds(messages) ?? []) : NOTHING_SENT;
+    const result = approved ? yield* sendCancellations(chosenIds(messages) ?? [], pending, signal) : NOTHING_SENT;
     // ◀ step 9
     yield* toolResult(messages, pending, result);
   }

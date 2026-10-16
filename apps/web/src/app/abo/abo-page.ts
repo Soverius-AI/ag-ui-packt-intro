@@ -20,6 +20,9 @@ import { SubscriptionsCard } from './subscriptions-card';
   imports: [CopilotChat, ApprovalCard],
   template: `
     <!-- ▶ step 9: how many subagents are running -->
+    @if (laneSummary()) {
+      <p class="lanes">{{ laneSummary() }}</p>
+    }
     <!-- ◀ step 9 -->
     <copilot-chat agentId="abo" />
     <abo-approval-card />
@@ -54,9 +57,30 @@ export class AboPage {
     // ◀ step 8
 
     // ▶ step 9: DELEGATE, every subagent reports in its own lane
+    registerRenderActivityMessage({ activityType: 'cancellation', content: LaneSchema, component: CancellationLane, agentId: 'abo' });
+    lightBadges('DELEGATE');
     // ◀ step 9
   }
 
   // ▶ step 9: CopilotKit has no subagent UI, but the AG-UI client hands us every SUBAGENT_* event
+  private readonly store = injectAgentStore('abo');
+  private readonly subagents = signal<Record<string, 'running' | 'done' | 'failed'>>({});
+  protected readonly laneSummary = computed(() => {
+    const states = Object.values(this.subagents());
+    if (!states.length) return '';
+    const count = (state: string) => states.filter((value) => value === state).length;
+    return `Subagents: ${count('running')} running · ${count('done')} done · ${count('failed')} failed`;
+  });
+
+  private readonly listen = effect((onCleanup) => {
+    const set = (id: string, state: 'running' | 'done' | 'failed') => this.subagents.update((all) => ({ ...all, [id]: state }));
+    const subscription = this.store().agent.subscribe({
+      onRunStartedEvent: () => this.subagents.set({}),
+      onSubagentStartedEvent: ({ event }) => set(event.subagentRunId, 'running'),
+      onSubagentFinishedEvent: ({ event }) => set(event.subagentRunId, 'done'),
+      onSubagentErrorEvent: ({ event }) => set(event.subagentRunId, 'failed'),
+    });
+    onCleanup(() => subscription.unsubscribe());
+  });
   // ◀ step 9
 }
