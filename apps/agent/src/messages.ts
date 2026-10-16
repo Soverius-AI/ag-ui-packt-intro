@@ -1,4 +1,4 @@
-import type { InputContent, Message } from '@ag-ui/core';
+import type { ContentPart, Message } from '@ag-ui/core';
 import type { ChatMessage } from './llama.ts';
 
 /** AG-UI messages → the model's Chat Completions messages. */
@@ -13,13 +13,13 @@ export function toChatMessages(messages: Message[]): ChatMessage[] {
       case 'assistant':
         return [{ role: 'assistant', content: message.content ?? '', ...(message.toolCalls?.length ? { tool_calls: message.toolCalls } : {}) }];
       case 'tool':
-        return [{ role: 'tool', tool_call_id: message.toolCallId, content: message.content }];
+        return [{ role: 'tool', tool_call_id: message.toolCallId, content: typeof message.content === 'string' ? message.content : textOf(message.content) }];
       default:
         return []; // activity and reasoning messages are for the screen, never for the model
     }
   });
 }
 
-function textOf(parts: InputContent[]): string {
+function textOf(parts: ContentPart[]): string {
   return parts.flatMap((part) => (part.type === 'text' ? [part.text] : [])).join('\n');
 }

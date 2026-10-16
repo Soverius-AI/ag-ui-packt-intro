@@ -3,7 +3,8 @@
  * @ag-ui/encoder speaks both wire formats; the client's Accept header picks SSE or protobuf.
  */
 import { createServer, type IncomingMessage, type ServerResponse } from 'node:http';
-import { EventSchemas, EventType, RunAgentInputSchema, type AGUIEvent, type RunAgentInput } from '@ag-ui/core';
+import { EventType, type AGUIEvent, type RunAgentInput } from '@ag-ui/core';
+import { EventSchemas, RunAgentInputSchema } from '@ag-ui/core/schemas';
 import { EventEncoder } from '@ag-ui/encoder';
 import { AGUI_MEDIA_TYPE } from '@ag-ui/proto';
 import { aboAgent } from './abo/agent.ts';

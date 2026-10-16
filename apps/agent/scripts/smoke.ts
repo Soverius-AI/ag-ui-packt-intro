@@ -6,7 +6,8 @@
  *   node scripts/smoke.ts /hello --proto        # /hello over protobuf
  *   node scripts/smoke.ts "Where should we go?"
  */
-import { EventSchemas, EventType } from '@ag-ui/core';
+import { EventType } from '@ag-ui/core';
+import { EventSchemas } from '@ag-ui/core/schemas';
 import { AGUI_MEDIA_TYPE, decode } from '@ag-ui/proto';
 import { readSseData } from '../src/sse.ts';
 

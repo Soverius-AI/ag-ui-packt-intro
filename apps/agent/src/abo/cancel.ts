@@ -3,7 +3,7 @@
  * and reports progress in its own lane. A failed lane is not a failed run.
  */
 import { randomUUID } from 'node:crypto';
-import { EventType, type AGUIEvent } from '@ag-ui/core';
+import { EventType, type AGUIEvent, type JsonPatch } from '@ag-ui/core';
 import { streamChat } from '../llama.ts';
 import { SUBSCRIPTIONS, type Subscription } from './data.ts';
 
@@ -34,7 +34,7 @@ export function cancelAll(ids: string[]): CancellationReport {
 async function* cancelWith(subscription: Subscription, parentToolCallId: string, signal: AbortSignal): AsyncGenerator<AGUIEvent, CancellationOutcome> {
   const subagentRunId = randomUUID();
   const messageId = randomUUID();
-  const lane = (patch: object[]): AGUIEvent => ({ type: EventType.ACTIVITY_DELTA, messageId, activityType: 'cancellation', subagentRunId, patch });
+  const lane = (patch: JsonPatch): AGUIEvent => ({ type: EventType.ACTIVITY_DELTA, messageId, activityType: 'cancellation', subagentRunId, patch });
 
   yield { type: EventType.SUBAGENT_STARTED, subagentRunId, name: `cancel ${subscription.name}`, description: `Cancel ${subscription.name}`, parentToolCallId };
   yield {

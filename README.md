@@ -155,8 +155,8 @@ pnpm nx run agent:abo-flow --record recordings
 
 ## Version pins
 
-- `@ag-ui/core`, `@ag-ui/client`, `@ag-ui/encoder` and `@ag-ui/proto` are pinned to exactly **0.0.59**, the version `@copilotkit/angular` **0.5.2** depends on.
-- `@copilotkit/angular` 0.5.2 needs Angular 22 and TypeScript ~6.0. zod stays on 3.25.76.
+- `@ag-ui/core`, `@ag-ui/client`, `@ag-ui/encoder` and `@ag-ui/proto` are pinned to exactly **1.0.2** (AG-UI 1.0), the version `@copilotkit/angular` **0.5.3** depends on. The zod validators come from `@ag-ui/core/schemas`.
+- `@copilotkit/angular` 0.5.3 needs Angular 22 and TypeScript ~6.0. zod stays on 3.25.76.
 - SDK 0.0.59's protobuf binding can't encode reasoning, activity or tool-result events, so the server skips them on protobuf and logs a warning. Rich features stay on SSE.
 
 ## Maintaining the steps
