@@ -6,5 +6,9 @@ import { HttpAgent, type RunAgentInput } from '@ag-ui/client';
  */
 export class ProtobufHttpAgent extends HttpAgent {
   // ▶ step 5: ask for protobuf
+  protected override requestInit(input: RunAgentInput): RequestInit {
+    const init = super.requestInit(input);
+    return { ...init, headers: { ...init.headers, Accept: 'application/vnd.ag-ui.event+proto' } };
+  }
   // ◀ step 5
 }
