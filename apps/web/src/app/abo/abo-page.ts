@@ -50,6 +50,7 @@ export class AboPage {
     // ◀ step 7
 
     // ▶ step 8: DECIDE, <abo-approval-card> answers the interrupt
+    lightBadges('DECIDE');
     // ◀ step 8
 
     // ▶ step 9: DELEGATE, every subagent reports in its own lane
