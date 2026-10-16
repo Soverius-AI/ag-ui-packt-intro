@@ -81,6 +81,24 @@ export class SseClient {
 
     try {
       // ▶ step 3: POST a RunAgentInput, read the events with @ag-ui/client
+      const response$ = runHttpRequest(() =>
+        fetch(`http://localhost:8930${this.route()}`, {
+          method: 'POST',
+          headers: { 'Content-Type': 'application/json', Accept: 'text/event-stream' },
+          body: JSON.stringify({
+            threadId: this.threadId, runId: crypto.randomUUID(),
+            messages: this.messages(), tools: [], context: [], state: {},
+          }),
+        }),
+      );
+
+      const events$ = transformHttpEventStream(response$).pipe(verifyEvents());
+      await events$.forEach((event) => this.events.update((list) => [...list, event]));
+
+      this.messages.update((list) => [
+        ...list,
+        { id: crypto.randomUUID(), role: 'assistant', content: this.answer() },
+      ]);
       // ◀ step 3
     } finally {
       this.running.set(false);
