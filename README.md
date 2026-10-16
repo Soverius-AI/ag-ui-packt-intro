@@ -80,7 +80,7 @@ Every step has a branch pair. The start branch is what the audience sees, and th
 | 2 | Step 2 · The Gemma Agent | none, runs on `01-backend-solution` | `apps/agent/src/agent.ts`, `apps/agent/src/turn.ts` (read only) |
 | 3 | Step 3 · A Client Without CopilotKit | `03-sse-client-start` → `03-sse-client-solution` | `apps/web/src/app/examples/sse-client.ts` |
 | 4 | Step 4 · CopilotKit for Angular | `04-copilotkit-start` → `04-copilotkit-solution` | `apps/web/src/app/app.config.ts`, `apps/web/src/app/examples/copilot-page.ts` |
-| 5 | Step 5 · The Same Chat Over Protobuf | `05-protobuf-start` → `05-protobuf-solution` | `apps/web/src/app/app.config.ts`, `apps/web/src/app/protobuf-http-agent.ts`, `apps/agent/src/server.ts` (the guard) |
+| 5 | Step 5 · The Same Chat Over Protobuf | `05-protobuf-start` → `05-protobuf-solution` | `apps/web/src/app/app.config.ts`, `apps/web/src/app/protobuf-http-agent.ts` |
 | 6 | SEE · The Tool Reports Its Progress | `06-see-start` → `06-see-solution` | `apps/agent/src/abo/scan.ts`, `apps/web/src/app/abo/abo-page.ts` |
 | 7 | ASK · The UI Offers a Tool | `07-ask-start` → `07-ask-solution` | `apps/web/src/app/abo/abo-page.ts` |
 | 8 | DECIDE · End the Run With a Question | `08-decide-start` → `08-decide-solution` | `apps/agent/src/abo/agent.ts`, `apps/web/src/app/abo/abo-page.ts`, `apps/web/src/app/abo/approval-card.ts` |
@@ -157,7 +157,7 @@ pnpm nx run agent:abo-flow --record recordings
 
 - `@ag-ui/core`, `@ag-ui/client`, `@ag-ui/encoder` and `@ag-ui/proto` are pinned to exactly **1.0.2** (AG-UI 1.0), the version `@copilotkit/angular` **0.5.3** depends on. The zod validators come from `@ag-ui/core/schemas`.
 - `@copilotkit/angular` 0.5.3 needs Angular 22 and TypeScript ~6.0. zod stays on 3.25.76.
-- SDK 0.0.59's protobuf binding can't encode reasoning, activity or tool-result events, so the server skips them on protobuf and logs a warning. Rich features stay on SSE.
+- Since 1.0, protobuf carries every event type, including reasoning, activity, tool results and subagents, so `/protobuf` shows the same features as SSE. (SDK 0.0.59 wrote empty frames for those, and the talk of 2026-09-16 needed a server guard for it.)
 
 ## Maintaining the steps
 

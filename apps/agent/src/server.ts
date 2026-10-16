@@ -6,7 +6,6 @@ import { createServer, type IncomingMessage, type ServerResponse } from 'node:ht
 import { EventType, type AGUIEvent, type RunAgentInput } from '@ag-ui/core';
 import { EventSchemas, RunAgentInputSchema } from '@ag-ui/core/schemas';
 import { EventEncoder } from '@ag-ui/encoder';
-import { AGUI_MEDIA_TYPE } from '@ag-ui/proto';
 import { aboAgent } from './abo/agent.ts';
 import { runAgent } from './agent.ts';
 import { helloAgent } from './hello.ts';
@@ -40,7 +39,7 @@ async function handle(req: IncomingMessage, res: ServerResponse): Promise<void> 
   if (req.method !== 'POST' || !agent) return void res.writeHead(404).end();
 
   // Everything the agent knows arrives in this body: the server keeps no session.
-  // SDK 0.0.59 requires tools/context/state, so a minimal hand-written curl body gets defaults.
+  // tools, context and state are optional, but the agents read them, so a minimal hand-written curl body gets defaults.
   const parsed = RunAgentInputSchema.safeParse({ tools: [], context: [], state: {}, ...(await readJson(req)) });
   if (!parsed.success) {
     res.writeHead(400, { 'Content-Type': 'application/json' });
@@ -50,10 +49,7 @@ async function handle(req: IncomingMessage, res: ServerResponse): Promise<void> 
   logRunInput(route, input, req.headers.accept);
 
   // The agent for this route: an async generator of AG-UI events.
-  let events = agent(input, abortOnClose(res));
-  // @live 5s begin: SDK 0.0.59 cannot encode reasoning, activity or tool results as protobuf
-  if (req.headers.accept?.includes(AGUI_MEDIA_TYPE)) events = skipUnencodable(events);
-  // @live 5s end
+  const events = agent(input, abortOnClose(res));
 
   // @live 1 begin: one agent, two wire formats
   const encoder = new EventEncoder({ accept: req.headers.accept });
@@ -75,20 +71,6 @@ function guard(agent: Agent): Agent {
       if (!signal.aborted) yield { type: EventType.RUN_ERROR, message: error instanceof Error ? error.message : String(error) };
     }
   };
-}
-
-/** The protobuf binding of SDK 0.0.59 has no message for some event types and would write empty frames. */
-async function* skipUnencodable(events: AsyncIterable<AGUIEvent>): AsyncGenerator<AGUIEvent> {
-  const protobuf = new EventEncoder({ accept: AGUI_MEDIA_TYPE });
-  const skipped = new Set<string>();
-  for await (const event of events) {
-    if (protobuf.encodeBinary(event).byteLength > 4) {
-      yield event;
-      continue;
-    }
-    if (!skipped.has(event.type)) console.warn(`  ⚠ protobuf cannot carry ${event.type} in SDK 0.0.59, skipped`);
-    skipped.add(event.type);
-  }
 }
 
 function abortOnClose(res: ServerResponse): AbortSignal {

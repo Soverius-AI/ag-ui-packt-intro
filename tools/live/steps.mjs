@@ -11,7 +11,7 @@
  *   01-backend-solution    Step 1 · Backend with the AG-UI libraries            = 03-sse-client-start
  *   03-sse-client-solution Step 3 · Angular client without CopilotKit           = 04-copilotkit-start
  *   04-copilotkit-solution Step 4 · CopilotKit for Angular                      = 05-protobuf-start
- *   05-protobuf-solution   Step 5 · The same chat over protobuf (with 5s)       = 06-see-start
+ *   05-protobuf-solution   Step 5 · The same chat over protobuf                 = 06-see-start
  *   06-see-solution        Step 6 · SEE: activity while the tool runs           = 07-ask-start
  *   07-ask-solution        Step 7 · ASK: the agent proposes, the human decides  = 08-decide-start
  *   08-decide-solution     Step 8 · DECIDE: an interrupt ends the run           = 09-delegate-start
